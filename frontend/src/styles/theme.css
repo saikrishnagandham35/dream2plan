@@ -1,0 +1,103 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Crimson+Pro:ital,wght@0,400;0,600;1,400;1,600&display=swap');
+@import url('https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* Fonts */
+  --font-display: 'Clash Display', 'Outfit', sans-serif;
+  --font-serif:   'Crimson Pro', Georgia, serif;
+  --font-body:    'Outfit', sans-serif;
+
+  /* Teal scale (used everywhere indigo was) */
+  --indigo-50:   #f0fdfa;
+  --indigo-100:  #ccfbf1;
+  --indigo-200:  #2dd4bf;
+  --indigo-300:  #2dd4bf;
+  --indigo-400:  #2dd4bf;
+  --indigo-500:  #14b8a6;
+  --indigo-600:  #0d9488;
+  --indigo-700:  #0f766e;
+  --indigo-800:  #115e59;
+  --indigo-900:  #0d3330;
+
+  /* ── Dark Backgrounds ── */
+  --bg-page:   #0f0f0f;
+  --bg-white:  #181818;
+  --bg-subtle: #202020;
+  --bg-card:   #1c1c1c;
+  --bg-input:  #232323;
+
+  /* ── Borders ── */
+  --border:       #2a2a2a;
+  --border-focus: #14b8a6;
+
+  /* ── Typography ── */
+  --text-primary:   #e8f5f3;   /* warm white — easy on eyes */
+  --text-secondary: #9db8b4;   /* muted teal-grey */
+  --text-muted:     #556b68;   /* very muted for labels */
+
+  /* ── Teal Accent ── */
+  --accent:       #14b8a6;
+  --accent-hover: #0d9488;
+  --accent-dark:  #0f766e;
+  --accent-light: rgba(20,184,166,0.12);
+  --accent-glow:  rgba(20,184,166,0.2);
+
+  /* Tabs */
+  --tab-active-bg:   #14b8a6;
+  --tab-active-text: #0f0f0f;
+  --tab-bg:          #202020;
+  --tab-text:        #9db8b4;
+
+  /* Shadows */
+  --shadow-sm:     0 1px 4px rgba(0,0,0,0.5);
+  --shadow:        0 4px 20px rgba(0,0,0,0.6);
+  --shadow-lg:     0 20px 60px rgba(0,0,0,0.7);
+  --shadow-indigo: 0 8px 32px rgba(20,184,166,0.22);
+
+  /* Radii */
+  --radius-sm:  8px;
+  --radius-md:  14px;
+  --radius-lg:  20px;
+  --radius-xl:  28px;
+  --radius-2xl: 40px;
+
+  --transition: all 0.22s cubic-bezier(0.4,0,0.2,1);
+  --divider: #252525;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #111; }
+::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #14b8a6; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-10px); }
+}
+@keyframes pulse-indigo {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(20,184,166,0.5); }
+  50%       { box-shadow: 0 0 0 10px rgba(20,184,166,0); }
+}
