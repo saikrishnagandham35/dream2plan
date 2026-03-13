@@ -63,14 +63,6 @@ function getDomainIcon(domain) {
   return '💡';
 }
 
-
-const RISK_COLORS = {
-  Low: { bg: 'rgba(34,197,94,0.1)', text: '#22c55e' },
-  Medium: { bg: 'rgba(251,191,36,0.1)', text: '#fbbf24' },
-  High: { bg: 'rgba(239,68,68,0.1)', text: '#ef4444' },
-};
-
-
 export default function HistoryPage({
   user,
   onViewBlueprint,

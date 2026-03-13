@@ -14,12 +14,13 @@ export default function RecommendationsPage({
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
-  const [generatingDomain, setGeneratingDomain] = useState(null);
+  const [, setGeneratingDomain] = useState(null);
 
 
   useEffect(() => {
-    fetchRecommendations();
-  }, []);
+  fetchRecommendations();
+// eslint-disable-next-line
+}, []);
 
 
   // ✅ FIXED HERE
