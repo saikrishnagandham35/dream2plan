@@ -83,12 +83,14 @@ export default function RecommendationsPage({
 
   return (
 
-    <div style={{
-      maxWidth: 900,
-      margin: "0 auto",
-      padding: 40,
-      color: "white"
-    }}>
+    <div
+      style={{
+        maxWidth: 900,
+        margin: "0 auto",
+        padding: 40,
+        color: "white",
+      }}
+    >
 
       <button onClick={onBack}>
         ← Back
@@ -115,10 +117,11 @@ export default function RecommendationsPage({
               key={i}
               style={{
                 border: "1px solid #333",
-                borderRadius: 10,
+                borderRadius: 12,
                 padding: 20,
                 marginTop: 20,
                 background: "#111",
+                boxShadow: "0 0 10px rgba(0,0,0,0.4)",
               }}
             >
 
@@ -132,8 +135,9 @@ export default function RecommendationsPage({
                 }
                 style={{
                   marginTop: 10,
-                  padding: "8px 14px",
-                  cursor: "pointer"
+                  padding: "8px 16px",
+                  borderRadius: 6,
+                  cursor: "pointer",
                 }}
               >
                 Generate Blueprint
