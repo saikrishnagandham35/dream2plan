@@ -4,12 +4,6 @@ const API_URL =
   process.env.REACT_APP_API_URL ||
   "https://saikrishna471032-dream2plan-backend.hf.space";
 
-const RISK_COLORS = {
-  Low: "green",
-  Medium: "orange",
-  High: "red",
-};
-
 const DOMAIN_ICONS = {
   EdTech: "🎓",
   FinTech: "💳",
@@ -102,15 +96,17 @@ export default function RecommendationsPage({
   };
 
   return (
-    <div className="container">
+    <div
+      style={{
+        maxWidth: 1000,
+        margin: "0 auto",
+        padding: 40,
+        color: "white",
+      }}
+    >
+      <button onClick={onBack}>← Back</button>
 
-      <button onClick={onBack}>
-        ← Back
-      </button>
-
-      <h1>
-        Recommended Business Domains
-      </h1>
+      <h1>Recommended Business Domains</h1>
 
       {loading && <p>Loading...</p>}
       {error && <p>{error}</p>}
@@ -120,7 +116,15 @@ export default function RecommendationsPage({
           (item, i) => (
             <div
               key={i}
-              className="card"
+              style={{
+                background: "#111",
+                border: "1px solid #333",
+                borderRadius: 16,
+                padding: 24,
+                marginTop: 20,
+                boxShadow:
+                  "0 0 20px rgba(0,0,0,0.5)",
+              }}
             >
               <h2>
                 {getDomainIcon(
@@ -130,19 +134,6 @@ export default function RecommendationsPage({
               </h2>
 
               <p>{item.why}</p>
-
-              <span
-                style={{
-                  color:
-                    RISK_COLORS[
-                      item.risk
-                    ],
-                }}
-              >
-                {item.risk} Risk
-              </span>
-
-              <br />
 
               <button
                 onClick={() =>
