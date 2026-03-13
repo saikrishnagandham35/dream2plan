@@ -1,29 +1,30 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 
 const API_URL =
   process.env.REACT_APP_API_URL ||
-  'https://saikrishna471032-dream2plan-backend.hf.space';
+  "https://saikrishna471032-dream2plan-backend.hf.space";
 
 
 export default function RecommendationsPage({
   inputData,
   onGenerate,
-  onBack
+  onBack,
 }) {
 
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
+
+  // eslint ignore for CI
   const [, setGeneratingDomain] = useState(null);
 
 
   useEffect(() => {
-  fetchRecommendations();
+    fetchRecommendations();
 // eslint-disable-next-line
-}, []);
+  }, []);
 
 
-  // ✅ FIXED HERE
   const fetchRecommendations = async () => {
 
     try {
@@ -35,7 +36,7 @@ export default function RecommendationsPage({
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             investment_amount:
@@ -51,8 +52,8 @@ export default function RecommendationsPage({
               inputData?.user_message || null,
 
             business_domain:
-              inputData?.business_domain || null
-          })
+              inputData?.business_domain || null,
+          }),
         }
       );
 
@@ -89,7 +90,7 @@ export default function RecommendationsPage({
 
     onGenerate({
       ...inputData,
-      business_domain: domain
+      business_domain: domain,
     });
 
   };
@@ -120,7 +121,7 @@ export default function RecommendationsPage({
               style={{
                 border: "1px solid #ccc",
                 marginTop: 10,
-                padding: 10
+                padding: 10,
               }}
             >
 
