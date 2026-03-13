@@ -1,214 +1,215 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 
 const API_URL =
   process.env.REACT_APP_API_URL ||
-  "https://saikrishna471032-dream2plan-backend.hf.space";
-
+  'https://saikrishna471032-dream2plan-backend.hf.space';
 
 const RISK_COLORS = {
-  Low: "#22c55e",
-  Medium: "#f59e0b",
-  High: "#ef4444",
+  Low:    { bg: 'rgba(34,197,94,0.12)',  text: '#22c55e', border: 'rgba(34,197,94,0.25)'  },
+  Medium: { bg: 'rgba(251,191,36,0.12)', text: '#fbbf24', border: 'rgba(251,191,36,0.25)' },
+  High:   { bg: 'rgba(239,68,68,0.12)',  text: '#ef4444', border: 'rgba(239,68,68,0.25)'  },
 };
 
 const FIT_COLORS = {
-  Perfect: "#14b8a6",
-  Good: "#6366f1",
-  Viable: "#f59e0b",
+  Perfect: '#14b8a6',
+  Good:    '#6366f1',
+  Viable:  '#f59e0b',
 };
 
 const DOMAIN_ICONS = {
-  EdTech: "🎓",
-  FinTech: "💳",
-  HealthTech: "🏥",
-  AgriTech: "🌾",
-  ECommerce: "🛒",
-  SaaS: "☁️",
-  FoodTech: "🍔",
-  CleanTech: "⚡",
-  LogisticsTech: "🚚",
-  Gaming: "🎮",
-  MediaTech: "📱",
-  Default: "💡",
+  EdTech: '🎓', FinTech: '💳', HealthTech: '🏥', AgriTech: '🌾',
+  'E-Commerce': '🛒', SaaS: '☁️', FoodTech: '🍔', LogisticsTech: '🚚',
+  CleanTech: '⚡', SpaceTech: '🚀', GameTech: '🎮', MediaTech: '📱',
+  HRTech: '👥', LegalTech: '⚖️', TravelTech: '✈️', FashionTech: '👗',
+  'Real Estate': '🏠', CyberSecurity: '🔒', Gaming: '🎮', Retail: '🏪',
+  'Cloud Kitchen': '👨‍🍳', 'Food Delivery': '🍕', default: '💡',
 };
 
 function getDomainIcon(domain) {
-  if (!domain) return "💡";
-
-  for (const key in DOMAIN_ICONS) {
-    if (domain.toLowerCase().includes(key.toLowerCase())) {
-      return DOMAIN_ICONS[key];
-    }
+  for (const [key, icon] of Object.entries(DOMAIN_ICONS)) {
+    if (domain?.toLowerCase().includes(key.toLowerCase())) return icon;
   }
-
-  return "💡";
+  return DOMAIN_ICONS.default;
 }
 
+function RiskBadge({ risk }) {
+  const colors = RISK_COLORS[risk] || RISK_COLORS.Medium;
+  return (
+    <span style={{
+      background: colors.bg,
+      color: colors.text,
+      border: `1px solid ${colors.border}`,
+      borderRadius: '100px',
+      padding: '3px 10px',
+      fontSize: '0.7rem',
+      fontWeight: '700',
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '4px',
+    }}>
+      <span
+        style={{
+          width: '5px',
+          height: '5px',
+          borderRadius: '50%',
+          background: colors.text,
+        }}
+      />
+      {risk} Risk
+    </span>
+  );
+}
 
 export default function RecommendationsPage({
   inputData,
   onGenerate,
   onBack,
 }) {
-
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
-  const [generatingDomain, setGeneratingDomain] =
-    useState(null);
-
+  const [generatingDomain, setGeneratingDomain] = useState(null);
+  const [hoveredCard, setHoveredCard] = useState(null);
 
   useEffect(() => {
     fetchRecommendations();
-// eslint-disable-next-line
   }, []);
 
-
   const fetchRecommendations = async () => {
-
     try {
-
       setLoading(true);
 
-      const res = await fetch(
+      const response = await fetch(
         `${API_URL}/api/recommend`,
         {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(inputData),
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            investment_amount: inputData?.investment_amount || null,
+            risk_level: inputData?.risk_level || 'Medium',
+            location: inputData?.location || 'India',
+            user_message: inputData?.user_message || null,
+            business_domain: inputData?.business_domain || null,
+          }),
         }
       );
 
-      const result = await res.json();
+      const result = await response.json();
 
-      if (result.status === "success") {
+      if (result.status === 'success') {
         setData(result);
       } else {
-        setError("Failed");
+        setError('AI could not generate recommendations');
       }
-
-    } catch {
-      setError("Server error");
+    } catch (err) {
+      setError('Backend not reachable. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-
   const handleGenerate = (domain) => {
-
     setGeneratingDomain(domain);
-
-    onGenerate({
-      ...inputData,
-      business_domain: domain,
-    });
+    onGenerate({ ...inputData, business_domain: domain });
   };
 
+  const formatInvestment = (amount) => {
+    if (!amount) return null;
 
-  return (
+    try {
+      const num = parseInt(amount);
 
-    <div style={{ maxWidth: 1100, margin: "0 auto", padding: 40 }}>
+      if (num >= 10000000) return `₹${(num / 10000000).toFixed(1)} Crore`;
+      if (num >= 100000) return `₹${(num / 100000).toFixed(1)} Lakh`;
+      if (num >= 1000) return `₹${(num / 1000).toFixed(1)}K`;
 
-      <button onClick={onBack}>
-        ← Back
-      </button>
+      return `₹${num}`;
+    } catch {
+      return `₹${amount}`;
+    }
+  };
 
-      <h1 style={{ marginBottom: 20 }}>
-        Recommended Business Domains
-      </h1>
-
-
-      {loading && <p>Loading...</p>}
-
-      {error && <p>{error}</p>}
-
-
-      {!loading &&
-        data?.recommendations?.top_3?.map(
-          (item, i) => (
-
-            <div
-              key={i}
-              style={{
-                background: "#111",
-                border: "1px solid #333",
-                borderRadius: 16,
-                padding: 24,
-                marginTop: 20,
-                boxShadow:
-                  "0 0 20px rgba(0,0,0,0.6)",
-                transition: "0.25s",
-              }}
-            >
-
-              <h2>
-                {getDomainIcon(item.domain)}{" "}
-                {item.domain}
-              </h2>
-
-
-              <p>{item.why}</p>
-
-
-              <div
-                style={{
-                  marginTop: 10,
-                  color:
-                    RISK_COLORS[
-                      item.risk
-                    ] || "#aaa",
-                  fontWeight: "bold",
-                }}
-              >
-                {item.risk} Risk
-              </div>
-
-
-              {item.investment_fit && (
-                <div
-                  style={{
-                    color:
-                      FIT_COLORS[
-                        item.investment_fit
-                      ],
-                  }}
-                >
-                  {item.investment_fit} Fit
-                </div>
-              )}
-
-
-              <button
-                onClick={() =>
-                  handleGenerate(
-                    item.domain
-                  )
-                }
-                style={{
-                  marginTop: 12,
-                  padding: "8px 16px",
-                  borderRadius: 8,
-                  background: "#14b8a6",
-                  border: "none",
-                  cursor: "pointer",
-                }}
-              >
-                {generatingDomain ===
-                item.domain
-                  ? "Generating..."
-                  : "Generate Blueprint"}
-              </button>
-
-            </div>
-
-          )
-        )}
-
-    </div>
-
+  const investment = formatInvestment(
+    inputData?.investment_amount
   );
 
+  const risk = inputData?.risk_level || 'Medium';
+
+  return (
+    <div style={{ minHeight: '100vh', background: 'var(--bg-page)' }}>
+      
+      {/* Loading */}
+      {loading && (
+        <div style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          Loading...
+        </div>
+      )}
+
+      {/* Error */}
+      {!loading && error && (
+        <div style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          {error}
+        </div>
+      )}
+
+      {/* Main */}
+      {!loading && data && (
+        <div style={{
+          maxWidth: '1100px',
+          margin: '0 auto',
+          padding: '60px 24px',
+        }}>
+
+          <p onClick={onBack}>← Back</p>
+
+          <h1>Recommended Business Domains</h1>
+
+          <div style={{
+            display: 'grid',
+            gap: '20px',
+          }}>
+            {(data.recommendations?.top_3 || []).map(
+              (item, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    background: 'var(--bg-white)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '16px',
+                    padding: '24px',
+                  }}
+                >
+                  <h3>
+                    {getDomainIcon(item.domain)} {item.domain}
+                  </h3>
+
+                  <RiskBadge risk={item.risk} />
+
+                  <p>{item.why}</p>
+
+                  <button
+                    onClick={() =>
+                      handleGenerate(item.domain)
+                    }
+                  >
+                    Generate Blueprint
+                  </button>
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
