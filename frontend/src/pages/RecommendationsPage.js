@@ -4,6 +4,11 @@ const API_URL =
   process.env.REACT_APP_API_URL ||
   "https://saikrishna471032-dream2plan-backend.hf.space";
 
+const RISK_COLORS = {
+  Low: "green",
+  Medium: "orange",
+  High: "red",
+};
 
 const DOMAIN_ICONS = {
   EdTech: "🎓",
@@ -17,15 +22,14 @@ const DOMAIN_ICONS = {
   LogisticsTech: "🚚",
   Gaming: "🎮",
   MediaTech: "📱",
-  Default: "💡",
 };
 
 function getDomainIcon(domain) {
   if (!domain) return "💡";
 
-  for (const [key, icon] of Object.entries(DOMAIN_ICONS)) {
+  for (const key in DOMAIN_ICONS) {
     if (domain.toLowerCase().includes(key.toLowerCase())) {
-      return icon;
+      return DOMAIN_ICONS[key];
     }
   }
 
@@ -40,7 +44,8 @@ export default function RecommendationsPage({
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
-  const [, setGeneratingDomain] = useState(null);
+  const [generatingDomain, setGeneratingDomain] =
+    useState(null);
 
   useEffect(() => {
     fetchRecommendations();
@@ -60,19 +65,15 @@ export default function RecommendationsPage({
           },
           body: JSON.stringify({
             investment_amount:
-              inputData?.investment_amount || null,
-
+              inputData?.investment_amount,
             risk_level:
-              inputData?.risk_level || "Medium",
-
+              inputData?.risk_level,
             location:
-              inputData?.location || "India",
-
+              inputData?.location,
             user_message:
-              inputData?.user_message || null,
-
+              inputData?.user_message,
             business_domain:
-              inputData?.business_domain || null,
+              inputData?.business_domain,
           }),
         }
       );
@@ -82,10 +83,10 @@ export default function RecommendationsPage({
       if (result.status === "success") {
         setData(result);
       } else {
-        setError("Failed to get recommendations");
+        setError("Failed");
       }
     } catch {
-      setError("Cannot connect to backend");
+      setError("Server error");
     } finally {
       setLoading(false);
     }
@@ -101,45 +102,47 @@ export default function RecommendationsPage({
   };
 
   return (
-    <div
-      style={{
-        maxWidth: 1000,
-        margin: "0 auto",
-        padding: 40,
-        color: "white",
-      }}
-    >
-      <button onClick={onBack}>← Back</button>
+    <div className="container">
 
-      <h2 style={{ marginTop: 20 }}>
+      <button onClick={onBack}>
+        ← Back
+      </button>
+
+      <h1>
         Recommended Business Domains
-      </h2>
+      </h1>
 
       {loading && <p>Loading...</p>}
       {error && <p>{error}</p>}
 
       {!loading &&
-        data &&
-        data.recommendations?.top_3?.map(
+        data?.recommendations?.top_3?.map(
           (item, i) => (
             <div
               key={i}
-              style={{
-                background: "#111",
-                border: "1px solid #333",
-                borderRadius: 16,
-                padding: 24,
-                marginTop: 20,
-                boxShadow:
-                  "0 0 20px rgba(0,0,0,0.5)",
-              }}
+              className="card"
             >
-              <h3>
-                {getDomainIcon(item.domain)}{" "}
+              <h2>
+                {getDomainIcon(
+                  item.domain
+                )}{" "}
                 {item.domain}
-              </h3>
+              </h2>
 
               <p>{item.why}</p>
+
+              <span
+                style={{
+                  color:
+                    RISK_COLORS[
+                      item.risk
+                    ],
+                }}
+              >
+                {item.risk} Risk
+              </span>
+
+              <br />
 
               <button
                 onClick={() =>
@@ -147,12 +150,6 @@ export default function RecommendationsPage({
                     item.domain
                   )
                 }
-                style={{
-                  marginTop: 10,
-                  padding: "8px 16px",
-                  borderRadius: 8,
-                  cursor: "pointer",
-                }}
               >
                 Generate Blueprint
               </button>
