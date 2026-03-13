@@ -4,7 +4,6 @@ const API_URL =
   process.env.REACT_APP_API_URL ||
   "https://saikrishna471032-dream2plan-backend.hf.space";
 
-
 export default function RecommendationsPage({
   inputData,
   onGenerate,
@@ -15,8 +14,8 @@ export default function RecommendationsPage({
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
 
-  // eslint ignore for CI
-  const [, setGeneratingDomain] = useState(null);
+  // eslint-disable-next-line
+  const [generatingDomain, setGeneratingDomain] = useState(null);
 
 
   useEffect(() => {
@@ -26,7 +25,6 @@ export default function RecommendationsPage({
 
 
   const fetchRecommendations = async () => {
-
     try {
 
       setLoading(true);
@@ -57,52 +55,49 @@ export default function RecommendationsPage({
         }
       );
 
-
       const result = await response.json();
 
-
       if (result.status === "success") {
-
         setData(result);
-
       } else {
-
         setError("Failed to get recommendations");
-
       }
 
-    } catch (err) {
-
+    } catch {
       setError("Could not connect to server");
-
     } finally {
-
       setLoading(false);
-
     }
-
   };
 
 
   const handleGenerate = (domain) => {
-
     setGeneratingDomain(domain);
 
     onGenerate({
       ...inputData,
       business_domain: domain,
     });
-
   };
 
 
   return (
 
-    <div style={{ padding: 40 }}>
+    <div style={{
+      maxWidth: 900,
+      margin: "0 auto",
+      padding: 40,
+      color: "white"
+    }}>
 
       <button onClick={onBack}>
-        Back
+        ← Back
       </button>
+
+
+      <h2 style={{ marginTop: 20 }}>
+        Recommended Business Domains
+      </h2>
 
 
       {loading && <p>Loading...</p>}
@@ -119,9 +114,11 @@ export default function RecommendationsPage({
             <div
               key={i}
               style={{
-                border: "1px solid #ccc",
-                marginTop: 10,
-                padding: 10,
+                border: "1px solid #333",
+                borderRadius: 10,
+                padding: 20,
+                marginTop: 20,
+                background: "#111",
               }}
             >
 
@@ -133,6 +130,11 @@ export default function RecommendationsPage({
                 onClick={() =>
                   handleGenerate(item.domain)
                 }
+                style={{
+                  marginTop: 10,
+                  padding: "8px 14px",
+                  cursor: "pointer"
+                }}
               >
                 Generate Blueprint
               </button>
@@ -148,5 +150,4 @@ export default function RecommendationsPage({
     </div>
 
   );
-
 }
