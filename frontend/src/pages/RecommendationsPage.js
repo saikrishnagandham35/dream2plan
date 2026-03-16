@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const API_URL = process.env.REACT_APP_API_URL || 'https://saikrishna471032-dream2plan-backend.hf.space';
 
 export default function RecommendationsPage({ inputData, onGenerate, onBack }) {
   const [loading, setLoading] = useState(true);
@@ -76,9 +76,11 @@ export default function RecommendationsPage({ inputData, onGenerate, onBack }) {
         .rec-card:hover { transform: translateY(-2px) !important; box-shadow: 0 8px 32px rgba(0,0,0,0.3) !important; }
         .gen-btn:hover { background: #0d9488 !important; }
         .other-card:hover { background: #1e1e1e !important; border-color: #14b8a6 !important; }
+        @media (max-width: 900px) { .rec-grid { grid-template-columns: 1fr !important; } }
+        @media (min-width: 901px) and (max-width: 1100px) { .rec-grid { grid-template-columns: repeat(2, 1fr) !important; } }
       `}</style>
 
-      <div style={{ maxWidth: '860px', margin: '0 auto' }}>
+      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
 
         {/* Back button */}
         <button
@@ -162,41 +164,53 @@ export default function RecommendationsPage({ inputData, onGenerate, onBack }) {
           </div>
         )}
 
-        {/* Top 3 Cards */}
+        {/* Top 3 Cards — side by side grid */}
         {!loading && data && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {data.recommendations?.top_3?.map((item, i) => (
-              <div
-                key={i}
-                className="rec-card"
-                style={{
-                  background: 'var(--bg-white)',
-                  border: '1.5px solid var(--border)',
-                  borderTop: `3px solid ${i === 0 ? '#14b8a6' : i === 1 ? '#6366f1' : '#ec4899'}`,
-                  borderRadius: '16px', padding: '24px 28px',
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
-                  animation: `fadeUp ${0.2 + i * 0.1}s ease both`,
-                }}
-              >
-                {/* Top row */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{
-                      width: '28px', height: '28px', borderRadius: '50%',
-                      background: i === 0 ? 'rgba(20,184,166,0.15)' : i === 1 ? 'rgba(99,102,241,0.15)' : 'rgba(236,72,153,0.15)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '0.75rem', fontWeight: '800',
-                      color: i === 0 ? '#14b8a6' : i === 1 ? '#6366f1' : '#ec4899',
-                    }}>#{i + 1}</div>
-                    <h3 style={{
-                      fontFamily: 'var(--font-display)',
-                      fontSize: '1.05rem', fontWeight: '700',
-                      color: 'var(--text-primary)', margin: 0,
-                    }}>{item.domain}</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div
+              className="rec-grid"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '16px',
+                alignItems: 'stretch',
+              }}
+            >
+              {data.recommendations?.top_3?.map((item, i) => (
+                <div
+                  key={i}
+                  className="rec-card"
+                  style={{
+                    background: 'var(--bg-white)',
+                    border: '1.5px solid var(--border)',
+                    borderTop: `3px solid ${i === 0 ? '#14b8a6' : i === 1 ? '#6366f1' : '#ec4899'}`,
+                    borderRadius: '16px', padding: '24px 20px',
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+                    animation: `fadeUp ${0.2 + i * 0.1}s ease both`,
+                    display: 'flex', flexDirection: 'column',
+                  }}
+                >
+                  {/* Top row */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{
+                        width: '28px', height: '28px', borderRadius: '50%',
+                        background: i === 0 ? 'rgba(20,184,166,0.15)' : i === 1 ? 'rgba(99,102,241,0.15)' : 'rgba(236,72,153,0.15)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '0.75rem', fontWeight: '800',
+                        color: i === 0 ? '#14b8a6' : i === 1 ? '#6366f1' : '#ec4899',
+                        flexShrink: 0,
+                      }}>#{i + 1}</div>
+                      <h3 style={{
+                        fontFamily: 'var(--font-display)',
+                        fontSize: '0.95rem', fontWeight: '700',
+                        color: 'var(--text-primary)', margin: 0,
+                      }}>{item.domain}</h3>
+                    </div>
                   </div>
 
                   {/* Badges */}
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' }}>
                     {item.risk && (
                       <span style={{
                         background: `${riskColor(item.risk)}20`,
@@ -225,46 +239,48 @@ export default function RecommendationsPage({ inputData, onGenerate, onBack }) {
                       }}>{item.investment_fit} Fit</span>
                     )}
                   </div>
-                </div>
 
-                {/* Tagline */}
-                {item.tagline && (
+                  {/* Tagline */}
+                  {item.tagline && (
+                    <p style={{
+                      fontSize: '0.85rem', color: '#14b8a6',
+                      fontWeight: '500', margin: '0 0 10px',
+                    }}>{item.tagline}</p>
+                  )}
+
+                  {/* Why */}
                   <p style={{
-                    fontSize: '0.85rem', color: '#14b8a6',
-                    fontWeight: '500', margin: '0 0 10px',
-                  }}>{item.tagline}</p>
-                )}
+                    color: 'var(--text-secondary)', fontSize: '0.88rem',
+                    lineHeight: '1.7', margin: '0 0 20px',
+                    flex: 1,
+                  }}>{item.why}</p>
 
-                {/* Why */}
-                <p style={{
-                  color: 'var(--text-secondary)', fontSize: '0.9rem',
-                  lineHeight: '1.7', margin: '0 0 20px',
-                }}>{item.why}</p>
-
-                {/* Generate button */}
-                <button
-                  className="gen-btn"
-                  onClick={() => handleGenerate(item.domain)}
-                  disabled={generatingDomain === item.domain}
-                  style={{
-                    background: generatingDomain === item.domain ? '#0d6b62' : '#14b8a6',
-                    color: '#0f0f0f', border: 'none', borderRadius: '10px',
-                    padding: '10px 24px', cursor: generatingDomain === item.domain ? 'not-allowed' : 'pointer',
-                    fontSize: '0.88rem', fontWeight: '700',
-                    display: 'flex', alignItems: 'center', gap: '8px',
-                    transition: 'all 0.2s',
-                    boxShadow: '0 4px 12px rgba(20,184,166,0.25)',
-                  }}
-                >
-                  {generatingDomain === item.domain ? (
-                    <>
-                      <div style={{ width: '14px', height: '14px', border: '2px solid rgba(0,0,0,0.2)', borderTop: '2px solid #0f0f0f', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
-                      Generating...
-                    </>
-                  ) : '🚀 Generate Blueprint'}
-                </button>
-              </div>
-            ))}
+                  {/* Generate button */}
+                  <button
+                    className="gen-btn"
+                    onClick={() => handleGenerate(item.domain)}
+                    disabled={generatingDomain === item.domain}
+                    style={{
+                      background: generatingDomain === item.domain ? '#0d6b62' : '#14b8a6',
+                      color: '#0f0f0f', border: 'none', borderRadius: '10px',
+                      padding: '10px 24px', cursor: generatingDomain === item.domain ? 'not-allowed' : 'pointer',
+                      fontSize: '0.88rem', fontWeight: '700',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                      transition: 'all 0.2s',
+                      boxShadow: '0 4px 12px rgba(20,184,166,0.25)',
+                      width: '100%',
+                    }}
+                  >
+                    {generatingDomain === item.domain ? (
+                      <>
+                        <div style={{ width: '14px', height: '14px', border: '2px solid rgba(0,0,0,0.2)', borderTop: '2px solid #0f0f0f', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+                        Generating...
+                      </>
+                    ) : '🚀 Generate Blueprint'}
+                  </button>
+                </div>
+              ))}
+            </div>
 
             {/* Other Options */}
             {data.recommendations?.other_options?.length > 0 && (
