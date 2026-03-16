@@ -68,7 +68,7 @@ export default function RecommendationsPage({ inputData, onGenerate, onBack }) {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-page)', padding: '32px 24px' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-page)', padding: '32px 16px' }}>
       <style>{`
         @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -168,12 +168,12 @@ export default function RecommendationsPage({ inputData, onGenerate, onBack }) {
         {!loading && data && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <div
-              className="rec-grid"
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
+                gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
                 gap: '16px',
                 alignItems: 'stretch',
+                width: '100%',
               }}
             >
               {data.recommendations?.top_3?.map((item, i) => (
