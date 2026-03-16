@@ -166,7 +166,7 @@ export default function RecommendationsPage({ inputData, onGenerate, onBack }) {
 
         {/* Top 3 Cards — side by side grid */}
         {!loading && data && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
             <div
               style={{
                 display: 'grid',
