@@ -68,7 +68,7 @@ export default function RecommendationsPage({ inputData, onGenerate, onBack }) {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-page)', padding: '32px 16px' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-page)', padding: '32px 16px', width: '100%', boxSizing: 'border-box' }}>
       <style>{`
         @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -80,7 +80,7 @@ export default function RecommendationsPage({ inputData, onGenerate, onBack }) {
         @media (min-width: 901px) and (max-width: 1100px) { .rec-grid { grid-template-columns: repeat(2, 1fr) !important; } }
       `}</style>
 
-      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+      <div style={{ maxWidth: '1100px', margin: '0 auto', width: '100%' }}>
 
         {/* Back button */}
         <button
@@ -170,7 +170,7 @@ export default function RecommendationsPage({ inputData, onGenerate, onBack }) {
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
                 gap: '16px',
                 alignItems: 'stretch',
                 width: '100%',
@@ -184,7 +184,7 @@ export default function RecommendationsPage({ inputData, onGenerate, onBack }) {
                     background: 'var(--bg-white)',
                     border: '1.5px solid var(--border)',
                     borderTop: `3px solid ${i === 0 ? '#14b8a6' : i === 1 ? '#6366f1' : '#ec4899'}`,
-                    borderRadius: '16px', padding: '24px 20px',
+                    borderRadius: '16px', padding: '20px 16px',
                     boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
                     animation: `fadeUp ${0.2 + i * 0.1}s ease both`,
                     display: 'flex', flexDirection: 'column',
