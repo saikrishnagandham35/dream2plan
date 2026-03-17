@@ -13,13 +13,12 @@ function InputPage({ onSubmit }) {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Now just passes form data up to App.js — no API call here!
   const handleSubmit = () => {
     onSubmit({
       investment_amount: formData.investment_amount || null,
       risk_level:        formData.risk_level        || null,
       business_domain:   formData.business_domain   || null,
-      location:          'India',
+      location:          formData.location,
       user_message:      formData.user_message       || null,
     });
   };
@@ -242,15 +241,30 @@ function InputPage({ onSubmit }) {
               </div>
             </div>
 
-            {/* Location — Static */}
+            {/* Location — Dropdown */}
             <div>
               <label style={labelStyle}>📍 Location</label>
-              <div style={{
-                ...baseInput,
-                display: 'flex', alignItems: 'center', gap: '8px',
-                cursor: 'default', opacity: 0.65, userSelect: 'none',
-              }}>
-                India
+              <div style={{ position: 'relative' }}>
+                <select
+                  name="location"
+                  value={formData.location}
+                  onChange={handleChange}
+                  onFocus={onFocus}
+                  onBlur={onBlur}
+                  style={baseInput}
+                >
+                  <option value="India">🇮🇳 All Over India</option>
+                  <option value="Vizag">🌊 Visakhapatnam (Vizag)</option>
+                  <option value="Hyderabad">🏙️ Hyderabad</option>
+                  <option value="Bangalore">🌿 Bangalore</option>
+                  <option value="Chennai">🌞 Chennai</option>
+                  <option value="Delhi">🏛️ Delhi</option>
+                </select>
+                <span style={{
+                  position: 'absolute', right: '12px', top: '50%',
+                  transform: 'translateY(-50%)', color: '#556b68',
+                  pointerEvents: 'none', fontSize: '0.65rem',
+                }}>▼</span>
               </div>
             </div>
 
