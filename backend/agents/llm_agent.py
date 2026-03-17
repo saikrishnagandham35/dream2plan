@@ -8,7 +8,20 @@ from rag.rag_engine import retrieve_context
 load_dotenv()
 
 # ══════════════════════════════════════════════════════════════
-#  GROQ — keep this function always, never comment it out!
+#  LOCATION MAPPING — same as recommend.py
+# ══════════════════════════════════════════════════════════════
+LOCATION_MAP = {
+    "Vizag":      {"city": "Visakhapatnam (Vizag)", "state": "Andhra Pradesh"},
+    "Hyderabad":  {"city": "Hyderabad",              "state": "Telangana"},
+    "Bangalore":  {"city": "Bangalore",              "state": "Karnataka"},
+    "Chennai":    {"city": "Chennai",                "state": "Tamil Nadu"},
+    "Delhi":      {"city": "Delhi",                  "state": "Delhi NCR"},
+    "India":      {"city": "All Over India",         "state": "India"},
+}
+
+
+# ══════════════════════════════════════════════════════════════
+#  GROQ — fallback
 # ══════════════════════════════════════════════════════════════
 def get_llm():
     return ChatGroq(
@@ -21,7 +34,6 @@ def get_llm():
 
 # ══════════════════════════════════════════════════════════════
 #  CEREBRAS (ACTIVE NOW)
-#  pip install cerebras-cloud-sdk
 # ══════════════════════════════════════════════════════════════
 def invoke_cerebras(prompt: str) -> str:
     from cerebras.cloud.sdk import Cerebras
@@ -36,9 +48,14 @@ def invoke_cerebras(prompt: str) -> str:
 
 
 # ══════════════════════════════════════════════════════════════
-#  RAG CONTEXT BUILDER
+#  RAG CONTEXT BUILDER — now location-aware
 # ══════════════════════════════════════════════════════════════
 def build_multi_query_context(domain: str, investment: str, location: str) -> str:
+    # Resolve full location info
+    loc = LOCATION_MAP.get(location, LOCATION_MAP["India"])
+    city = loc["city"]
+    state = loc["state"]
+
     queries = [
         f"{domain} market size India 2025 2026 opportunities",
         f"legal requirements budget {investment} India registration",
@@ -46,6 +63,8 @@ def build_multi_query_context(domain: str, investment: str, location: str) -> st
         f"budget allocation {investment} startup India",
         f"investors angel VC {domain} India funding",
         f"go to market strategy India {domain} startup",
+        f"startup ecosystem {city} {state} India",          # ✅ city-specific
+        f"state schemes {state} startups funding grants",   # ✅ state-specific
     ]
     seen = set()
     all_chunks = []
@@ -57,7 +76,7 @@ def build_multi_query_context(domain: str, investment: str, location: str) -> st
                 seen.add(chunk)
                 all_chunks.append(chunk)
     combined = "\n\n---\n\n".join(all_chunks)
-    print(f"📚 RAG: Retrieved {len(all_chunks)} unique chunks across {len(queries)} queries")
+    print(f"📚 RAG: Retrieved {len(all_chunks)} unique chunks across {len(queries)} queries for {city}, {state}")
     return combined
 
 
@@ -66,6 +85,11 @@ def build_multi_query_context(domain: str, investment: str, location: str) -> st
 # ══════════════════════════════════════════════════════════════
 def generate_blueprint(prompt: str, domain: str = "", investment: str = "", location: str = "India") -> str:
     try:
+        # Resolve location
+        loc = LOCATION_MAP.get(location, LOCATION_MAP["India"])
+        city = loc["city"]
+        state = loc["state"]
+
         if domain or investment:
             context = build_multi_query_context(domain, investment, location)
         else:
@@ -78,41 +102,35 @@ Use the following verified information about the Indian startup ecosystem as ref
 
 ---
 
-Now based on the above context and your expertise, generate the blueprint as instructed:
+Now based on the above context and your expertise, generate the blueprint as instructed.
+
+Location Context: {city}, {state}
 
 {prompt}
 
 CRITICAL REMINDERS:
-- Be specific to the domain and budget mentioned.
-- Show actual rupee amounts in budget allocation, NEVER say No data available.
+- Be specific to the domain, budget, and location ({city}, {state}) mentioned.
+- Show actual rupee amounts in budget allocation, NEVER say "No data available".
 - Legal section MUST include specific registrations relevant to budget and domain.
+- Mention state-specific schemes relevant to {state} where applicable.
 - Do NOT give generic answers, every line must be specific and actionable.
 - Each section must have unique, non-overlapping content.
 """
 
-        # ══════════════════════════════════════════════════════
-        # ACTIVE: CEREBRAS
-        # ══════════════════════════════════════════════════════
-        #return invoke_cerebras(enhanced_prompt)
-
-        # ── TO SWITCH: comment above line, uncomment one below ──
-        #llm = get_llm(); return llm.invoke(enhanced_prompt).content  # Groq
-
-        # ══════════════════════════════════════════════════════
-        # AUTO FALLBACK — comment active line above, uncomment below
-        # ══════════════════════════════════════════════════════
+        # ── AUTO FALLBACK — tries Groq first, then Cerebras ──
         apis = [
             ("Groq",     lambda: get_llm().invoke(enhanced_prompt).content),
             ("Cerebras", lambda: invoke_cerebras(enhanced_prompt)),
-         ]
+        ]
         for name, api_call in apis:
             try:
-                 print(f"Trying {name}...")
-                 result = api_call()
-                 print(f"{name} succeeded!")
-                 return result
+                print(f"Trying {name}...")
+                result = api_call()
+                print(f"✅ {name} succeeded!")
+                return result
             except Exception as e:
-                 print(f"{name} failed: {e}. Trying next...")
+                print(f"❌ {name} failed: {e}. Trying next...")
+
         return "All APIs failed. Please try again later."
 
     except Exception as e:

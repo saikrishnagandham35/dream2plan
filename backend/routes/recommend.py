@@ -9,6 +9,49 @@ import re
 load_dotenv()
 router = APIRouter()
 
+# ══════════════════════════════════════════════════════════════
+#  LOCATION MAPPING — City → State + Schemes
+# ══════════════════════════════════════════════════════════════
+LOCATION_MAP = {
+    "Vizag": {
+        "city": "Visakhapatnam (Vizag)",
+        "state": "Andhra Pradesh",
+        "region": "South India",
+        "schemes": ["T-Hub (AP/Telangana)", "AP Startup Policy", "STPI Vizag", "NASSCOM 10,000 Startups"]
+    },
+    "Hyderabad": {
+        "city": "Hyderabad",
+        "state": "Telangana",
+        "region": "South India",
+        "schemes": ["T-Hub", "Telangana Startup Policy", "STPI Hyderabad", "WE Hub (women entrepreneurs)"]
+    },
+    "Bangalore": {
+        "city": "Bangalore",
+        "state": "Karnataka",
+        "region": "South India",
+        "schemes": ["Karnataka Elevate (up to ₹50L grant)", "STPI Bangalore", "KBITS", "NASSCOM 10,000 Startups"]
+    },
+    "Chennai": {
+        "city": "Chennai",
+        "state": "Tamil Nadu",
+        "region": "South India",
+        "schemes": ["TIDEL Park", "STPI Chennai", "TN Startup & Innovation Policy", "SIPCOT"]
+    },
+    "Delhi": {
+        "city": "Delhi",
+        "state": "Delhi NCR",
+        "region": "North India",
+        "schemes": ["Delhi Startup Policy", "STPI Delhi", "DSIIDC", "Startup India (HQ in Delhi)"]
+    },
+    "India": {
+        "city": "All Over India",
+        "state": "India",
+        "region": "Pan India",
+        "schemes": ["Startup India", "MUDRA Loan", "SISFS", "CGSS", "DPIIT Recognition"]
+    }
+}
+
+
 class RecommendRequest(BaseModel):
     investment_amount: Optional[str] = None
     risk_level: Optional[str] = "Medium"
@@ -16,21 +59,9 @@ class RecommendRequest(BaseModel):
     user_message: Optional[str] = None
     business_domain: Optional[str] = None
 
-# ══════════════════════════════════════════════════════════════
-#  TO SWITCH TO GROQ: comment call_llm above, uncomment below
-# ══════════════════════════════════════════════════════════════
-def call_llm(prompt: str) -> str:
-     from langchain_groq import ChatGroq
-     llm = ChatGroq(
-         api_key=os.getenv("GROQ_API_KEY"),
-         model="llama-3.3-70b-versatile",
-         temperature=0.6,
-         max_tokens=2000
-    )
-     return llm.invoke(prompt).content
 
 # ══════════════════════════════════════════════════════════════
-#  CEREBRAS (ACTIVE NOW)
+#  CEREBRAS (ACTIVE)
 # ══════════════════════════════════════════════════════════════
 def call_llm(prompt: str) -> str:
     from cerebras.cloud.sdk import Cerebras
@@ -42,6 +73,7 @@ def call_llm(prompt: str) -> str:
         temperature=0.6,
     )
     return response.choices[0].message.content
+
 
 def format_investment(amount):
     if not amount:
@@ -55,6 +87,31 @@ def format_investment(amount):
     except:
         return f"₹{amount}"
 
+
+def get_rag_context(domain: str, investment: str, location: str) -> str:
+    """Get relevant RAG context for recommendations."""
+    try:
+        from rag.rag_engine import retrieve_context
+        queries = [
+            f"{domain} startup opportunities India {location} 2025 2026",
+            f"government schemes startups {location} India funding",
+            f"budget {investment} startup India market",
+        ]
+        seen = set()
+        chunks = []
+        for query in queries:
+            context = retrieve_context(query, k=2)
+            for chunk in context.split("\n\n---\n\n"):
+                chunk = chunk.strip()
+                if chunk and chunk not in seen:
+                    seen.add(chunk)
+                    chunks.append(chunk)
+        return "\n\n---\n\n".join(chunks[:6])
+    except Exception as e:
+        print(f"⚠️ RAG retrieval failed: {e}")
+        return ""
+
+
 @router.post("/recommend")
 async def recommend_domains(req: RecommendRequest):
     try:
@@ -63,34 +120,45 @@ async def recommend_domains(req: RecommendRequest):
         risk = req.risk_level or "Medium"
         idea = req.user_message or ""
         domain = req.business_domain or ""
+        location_key = req.location or "India"
+
+        # ── Get full location info ──
+        loc = LOCATION_MAP.get(location_key, LOCATION_MAP["India"])
+        city = loc["city"]
+        state = loc["state"]
+        schemes = ", ".join(loc["schemes"])
+
+        # ── Get RAG context ──
+        rag_context = get_rag_context(domain or "startup", investment_raw, city)
+        rag_section = f"""
+Use this verified India startup knowledge as reference:
+{rag_context}
+---
+""" if rag_context else ""
 
         # ── CASE 1: User selected a specific domain ──
         if domain:
             prompt = f"""You are an expert Indian startup consultant.
 
+{rag_section}
 The user has selected domain: "{domain}"
 Their inputs:
 - Investment: {investment} (raw: {investment_raw})
 - Risk Level: {risk}
 - Their Idea: "{idea}"
-- Location: India
+- City: {city}
+- State: {state}
+- Applicable State Schemes: {schemes}
 
-Generate 3 SPECIFIC startup business ideas within the "{domain}" domain that are REALISTIC for {investment} budget.
-
-IMPORTANT: Think of actual specific businesses, not generic descriptions.
-Examples:
-- Gaming + ₹5K → "Gaming YouTube Channel", "Mobile Game Reseller", "Esports Coaching"
-- FoodTech + ₹50K → "Cloud Kitchen", "Tiffin Delivery Service", "Home Baking Business"
-- TravelTech + ₹1L → "Travel Instagram Page + Blog", "Local Tour Guide App", "Homestay Listing Service"
-- Clothing + ₹20K → "Instagram Fashion Reselling", "Custom T-shirt Printing", "Thrift Store Online"
+Generate 3 SPECIFIC startup business ideas within the "{domain}" domain that are REALISTIC for {investment} budget and suited for {city}, {state}.
 
 Return ONLY valid JSON (no markdown, no extra text):
 {{
   "top_3": [
     {{
-      "domain": "Specific Business Name (e.g. Cloud Kitchen, Gaming YouTube Channel)",
+      "domain": "Specific Business Name",
       "tagline": "One line what this business does",
-      "why": "2-3 sentences: why this specific idea fits {investment} budget and {risk} risk in India 2025-26",
+      "why": "2-3 sentences: why this fits {investment} budget and {risk} risk in {city}, {state} 2025-26",
       "risk": "Low/Medium/High",
       "potential": "High/Medium",
       "investment_fit": "Perfect/Good/Viable",
@@ -99,7 +167,7 @@ Return ONLY valid JSON (no markdown, no extra text):
     {{
       "domain": "Specific Business Name 2",
       "tagline": "One line what this business does",
-      "why": "2-3 sentences why this fits the budget and risk",
+      "why": "2-3 sentences why this fits in {city}",
       "risk": "Low/Medium/High",
       "potential": "High/Medium",
       "investment_fit": "Perfect/Good/Viable",
@@ -108,7 +176,7 @@ Return ONLY valid JSON (no markdown, no extra text):
     {{
       "domain": "Specific Business Name 3",
       "tagline": "One line what this business does",
-      "why": "2-3 sentences why this fits the budget and risk",
+      "why": "2-3 sentences why this fits in {city}",
       "risk": "Low/Medium/High",
       "potential": "High/Medium",
       "investment_fit": "Perfect/Good/Viable",
@@ -125,12 +193,12 @@ Return ONLY valid JSON (no markdown, no extra text):
 
 STRICT RULES:
 - ALL ideas must be within "{domain}" only
-- ALL ideas must be REALISTIC for exactly {investment} budget
-- If budget is very small (< ₹10K): suggest content creation, reselling, service-based ideas
-- If budget is medium (₹1L-10L): suggest platform MVPs, physical setups, small teams
-- If budget is large (₹10L+): suggest full product builds, marketing campaigns, hiring
-- Be SPECIFIC: "Cloud Kitchen in Hyderabad" not just "FoodTech startup"
-- other_options: 4 more specific ideas within "{domain}"
+- ALL ideas must be REALISTIC for exactly {investment} budget in {city}, {state}
+- Mention {city} specifically in why/tagline where relevant
+- Suggest applicable state schemes: {schemes}
+- If budget < ₹10K: content creation, reselling, service-based ideas
+- If budget ₹1L-10L: platform MVPs, physical setups, small teams
+- If budget ₹10L+: full product builds, marketing campaigns, hiring
 - Return ONLY JSON
 """
 
@@ -138,20 +206,23 @@ STRICT RULES:
         else:
             prompt = f"""You are an expert Indian startup consultant.
 
-The user has NOT selected a domain. Recommend the 3 BEST startup domains AND specific ideas.
+{rag_section}
+The user has NOT selected a domain. Recommend the 3 BEST startup ideas.
 Their inputs:
 - Investment: {investment} (raw: {investment_raw})
 - Risk Level: {risk}
 - Their Idea: "{idea}"
-- Location: India
+- City: {city}
+- State: {state}
+- Applicable State Schemes: {schemes}
 
 Return ONLY valid JSON (no markdown, no extra text):
 {{
   "top_3": [
     {{
-      "domain": "Specific Business Idea Name (e.g. EdTech Doubt-Solving App, Tiffin Delivery Service)",
+      "domain": "Specific Business Idea Name",
       "tagline": "One line what this business does",
-      "why": "2-3 sentences: why this specific idea is perfect for {investment} budget and {risk} risk in India",
+      "why": "2-3 sentences: why this is perfect for {investment} budget in {city}, {state}",
       "risk": "Low/Medium/High",
       "potential": "High/Medium",
       "investment_fit": "Perfect/Good/Viable",
@@ -185,13 +256,14 @@ Return ONLY valid JSON (no markdown, no extra text):
 }}
 
 STRICT RULES:
-- ALL ideas must be REALISTIC for exactly {investment} budget
-- If budget < ₹10K: content creation, freelancing, reselling, WhatsApp-based services
-- If budget ₹10K-1L: service-based, small physical setup, simple digital products
-- If budget ₹1L-10L: MVP apps, small retail, cloud kitchen, local services
+- ALL ideas must be REALISTIC for exactly {investment} budget in {city}, {state}
+- Mention {city} specifically in why/tagline where relevant
+- Suggest applicable state schemes: {schemes}
+- If budget < ₹10K: content creation, freelancing, reselling
+- If budget ₹10K-1L: service-based, small physical setup
+- If budget ₹1L-10L: MVP apps, small retail, cloud kitchen
 - If budget ₹10L+: full product, funded startup, team hiring
-- If user has an idea in their message, top recommendation must match it
-- Be VERY SPECIFIC — real business names not generic domain names
+- If user has an idea, top recommendation must match it
 - Return ONLY JSON
 """
 
@@ -203,24 +275,29 @@ STRICT RULES:
             "status": "success",
             "investment": investment,
             "risk": risk,
+            "location": city,
+            "state": state,
             "selected_domain": domain,
             "recommendations": parsed
         }
 
     except Exception as e:
         print(f"❌ Recommend Error: {e}")
+        loc = LOCATION_MAP.get(req.location or "India", LOCATION_MAP["India"])
         domain = req.business_domain or ""
         return {
             "status": "success",
             "investment": format_investment(req.investment_amount),
             "risk": req.risk_level or "Medium",
+            "location": loc["city"],
+            "state": loc["state"],
             "selected_domain": domain,
             "recommendations": {
                 "top_3": [
                     {
                         "domain": "Content Creation Business",
                         "tagline": "Build audience and monetize through social media",
-                        "why": "Zero to minimal investment needed. Start with a phone and free tools. Instagram, YouTube, and WhatsApp are powerful for Indian markets.",
+                        "why": f"Zero to minimal investment needed. Instagram, YouTube, and WhatsApp are powerful for {loc['city']} markets.",
                         "risk": "Low",
                         "potential": "High",
                         "investment_fit": "Perfect",
@@ -229,7 +306,7 @@ STRICT RULES:
                     {
                         "domain": "Service-Based Consulting",
                         "tagline": "Offer skills as a service to businesses",
-                        "why": "No inventory or product needed. Can start immediately with existing skills. High demand for digital services in India.",
+                        "why": f"No inventory needed. High demand for digital services in {loc['city']}, {loc['state']}.",
                         "risk": "Low",
                         "potential": "Medium",
                         "investment_fit": "Perfect",
@@ -238,7 +315,7 @@ STRICT RULES:
                     {
                         "domain": "Reselling Business",
                         "tagline": "Buy and resell products online via Meesho or Instagram",
-                        "why": "Very low capital needed. Meesho allows zero-inventory reselling. Massive customer base already available.",
+                        "why": f"Very low capital needed. Massive customer base available in {loc['city']}.",
                         "risk": "Low",
                         "potential": "Medium",
                         "investment_fit": "Good",

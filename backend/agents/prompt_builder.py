@@ -3,6 +3,43 @@ from typing import Optional
 import re
 
 
+# ══════════════════════════════════════════════════════════════
+#  LOCATION MAPPING — City → State + Schemes
+# ══════════════════════════════════════════════════════════════
+LOCATION_MAP = {
+    "Vizag": {
+        "city": "Visakhapatnam (Vizag)",
+        "state": "Andhra Pradesh",
+        "schemes": ["T-Hub (AP/Telangana)", "AP Startup Policy", "STPI Vizag"]
+    },
+    "Hyderabad": {
+        "city": "Hyderabad",
+        "state": "Telangana",
+        "schemes": ["T-Hub", "Telangana Startup Policy", "STPI Hyderabad", "WE Hub"]
+    },
+    "Bangalore": {
+        "city": "Bangalore",
+        "state": "Karnataka",
+        "schemes": ["Karnataka Elevate (up to ₹50L grant)", "STPI Bangalore", "KBITS"]
+    },
+    "Chennai": {
+        "city": "Chennai",
+        "state": "Tamil Nadu",
+        "schemes": ["TIDEL Park", "STPI Chennai", "TN Startup & Innovation Policy"]
+    },
+    "Delhi": {
+        "city": "Delhi",
+        "state": "Delhi NCR",
+        "schemes": ["Delhi Startup Policy", "STPI Delhi", "DSIIDC"]
+    },
+    "India": {
+        "city": "All Over India",
+        "state": "India",
+        "schemes": ["Startup India", "MUDRA Loan", "SISFS", "CGSS", "DPIIT Recognition"]
+    }
+}
+
+
 def extract_budget_from_message(message: str) -> Optional[str]:
     if not message:
         return None
@@ -100,7 +137,6 @@ BUDGET TIER: ENTERPRISE (> ₹1,00,00,000)
 
 
 # ── STRICT SECTION FORMAT TEMPLATE ──
-# Using === delimiters makes parsing 100% reliable
 SECTION_FORMAT = """
 You MUST format your response using EXACTLY these section headers with === delimiters.
 Do NOT skip any section. Do NOT skip any bold header inside each section.
@@ -217,7 +253,7 @@ Every bold header MUST have at least 3 bullet points with specific details.
 **Government Schemes**
 - MUDRA Loan (Shishu/Kishore/Tarun) - eligibility and amount
 - Startup India Seed Fund Scheme - how to apply
-- State government schemes relevant to this domain
+- State government schemes relevant to this domain and location
 - SIDBI schemes and other government support
 
 **Grants & Competitions**
@@ -341,9 +377,14 @@ def build_structured_prompt(user_input: UserInput) -> str:
     budget_guidance = get_budget_guidance(budget_tier, user_input.business_domain or "General")
     domain = user_input.business_domain or "AI Recommended based on idea"
     risk = user_input.risk_level or "Medium"
-    location = user_input.location or "India"
 
-    # ── LLM INSTRUCTION: STRICT FORMATTING + DETAILED CONTENT ──
+    # ── Resolve full location info ──
+    location_key = user_input.location or "India"
+    loc = LOCATION_MAP.get(location_key, LOCATION_MAP["India"])
+    city = loc["city"]
+    state = loc["state"]
+    schemes = ", ".join(loc["schemes"])
+    location_context = f"{city}, {state}"
 
     strict_rules = f"""
     STRICT RULES — FOLLOW WITHOUT EXCEPTION:
@@ -351,21 +392,17 @@ def build_structured_prompt(user_input: UserInput) -> str:
     2. Budget allocation MUST show actual ₹ amounts based on {investment_display}.
     3. Legal requirements MUST match budget tier — no unnecessary registrations.
     4. Investor suggestions MUST be realistic for {investment_display} budget.
-    5. Do NOT repeat content across sections.
-    6. Be domain-specific and budget-specific throughout.
-    7. FORMATTING IS MANDATORY — every section MUST follow this exact format:
+    5. Location is {location_context} — mention state-specific schemes: {schemes}
+    6. Do NOT repeat content across sections.
+    7. Be domain-specific and budget-specific throughout.
+    8. FORMATTING IS MANDATORY — every section MUST follow this exact format:
     **Section Topic Name**
     - Key point one with specific details
     - Key point two with specific details
     - Key point three with specific details
 
-    **Another Topic**
-    - Point with actual numbers and names
-    - Point with actual data
-
     NEVER write plain paragraphs. ALWAYS use **Bold Headers** followed by bullet points (- ).
     Every single section must have at least 3 bold headers, each with 3-5 bullet points.
-    If you write a paragraph without bullets, that is WRONG. Convert everything to bullets.
 """
 
     # ── SCENARIO 1: Only form filled ──
@@ -376,7 +413,8 @@ Generate a HIGHLY SPECIFIC and ACTIONABLE startup blueprint for:
 - Business Domain: {domain}
 - Investment Amount: {investment_display}
 - Risk Level: {risk}
-- Location: {location}
+- Location: {location_context}
+- Applicable State Schemes: {schemes}
 
 {budget_guidance}
 {strict_rules}
@@ -390,7 +428,8 @@ A user has described their startup idea. Generate a HIGHLY SPECIFIC blueprint.
 
 User's Idea: "{user_input.user_message}"
 Investment Amount: {investment_display}
-Location: {location}
+Location: {location_context}
+Applicable State Schemes: {schemes}
 Risk Level: {risk}
 
 {budget_guidance}
@@ -407,7 +446,8 @@ User's Idea: "{user_input.user_message or 'Not provided'}"
 Business Domain: {domain}
 Investment Amount: {investment_display}
 Risk Level: {risk}
-Location: {location}
+Location: {location_context}
+Applicable State Schemes: {schemes}
 
 {budget_guidance}
 {strict_rules}

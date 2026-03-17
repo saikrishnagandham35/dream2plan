@@ -9,11 +9,26 @@ function InputPage({ onSubmit }) {
     user_message: '',
   });
 
+  const [validationError, setValidationError] = useState('');
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (validationError) setValidationError('');
   };
 
   const handleSubmit = () => {
+    const hasInput =
+      formData.user_message.trim() ||
+      formData.investment_amount ||
+      formData.risk_level ||
+      formData.business_domain;
+
+    if (!hasInput) {
+      setValidationError('Please fill at least one field to get recommendations.');
+      return;
+    }
+
+    setValidationError('');
     onSubmit({
       investment_amount: formData.investment_amount || null,
       risk_level:        formData.risk_level        || null,
@@ -92,6 +107,12 @@ function InputPage({ onSubmit }) {
           -webkit-box-shadow: 0 0 0px 1000px #232323 inset !important;
           -webkit-text-fill-color: #e8f5f3 !important;
         }
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          20%, 60% { transform: translateX(-6px); }
+          40%, 80% { transform: translateX(6px); }
+        }
+        .shake { animation: shake 0.4s ease; }
       `}</style>
 
       <div style={{ maxWidth: '620px', margin: '0 auto' }}>
@@ -241,7 +262,7 @@ function InputPage({ onSubmit }) {
               </div>
             </div>
 
-            {/* Location — Dropdown */}
+            {/* Location */}
             <div>
               <label style={labelStyle}>📍 Location</label>
               <div style={{ position: 'relative' }}>
@@ -253,7 +274,7 @@ function InputPage({ onSubmit }) {
                   onBlur={onBlur}
                   style={baseInput}
                 >
-                  <option value="India">All Over India</option>
+                  <option value="India">🇮🇳 All Over India</option>
                   <option value="Vizag">🌊 Visakhapatnam (Vizag)</option>
                   <option value="Hyderabad">🏙️ Hyderabad</option>
                   <option value="Bangalore">🌿 Bangalore</option>
@@ -270,11 +291,33 @@ function InputPage({ onSubmit }) {
 
           </div>
 
+          {/* Validation Error */}
+          {validationError && (
+            <div
+              className="shake"
+              style={{
+                marginTop: '20px',
+                background: 'rgba(239,68,68,0.1)',
+                border: '1px solid rgba(239,68,68,0.3)',
+                borderRadius: '10px',
+                padding: '12px 16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+              }}
+            >
+              <span style={{ fontSize: '1rem' }}>⚠️</span>
+              <p style={{ color: '#f87171', fontSize: '0.88rem', fontWeight: '500', margin: 0 }}>
+                {validationError}
+              </p>
+            </div>
+          )}
+
           {/* Submit */}
           <button
             onClick={handleSubmit}
             style={{
-              width: '100%', marginTop: '32px', padding: '15px',
+              width: '100%', marginTop: '24px', padding: '15px',
               background: '#14b8a6', color: '#0f0f0f',
               border: 'none', borderRadius: 'var(--radius-md)',
               fontFamily: 'var(--font-display)',
