@@ -18,8 +18,8 @@ export default function RecommendationsPage({ inputData, onGenerate, onBack }) {
   }, []);
 
   const getGridColumns = () => {
-    if (windowWidth < 768) return '1fr';
-    if (windowWidth < 1024) return 'repeat(2, 1fr)';
+    if (windowWidth < 600) return '1fr';
+    if (windowWidth < 900) return 'repeat(2, 1fr)';
     return 'repeat(3, 1fr)';
   };
 
