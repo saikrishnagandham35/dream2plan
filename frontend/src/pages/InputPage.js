@@ -274,7 +274,7 @@ function InputPage({ onSubmit }) {
                   onBlur={onBlur}
                   style={baseInput}
                 >
-                  <option value="India">🇮🇳 All Over India</option>
+                  <option value="India">All Over India</option>
                   <option value="Vizag">🌊 Visakhapatnam (Vizag)</option>
                   <option value="Hyderabad">🏙️ Hyderabad</option>
                   <option value="Bangalore">🌿 Bangalore</option>
