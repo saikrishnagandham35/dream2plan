@@ -7,11 +7,21 @@ export default function RecommendationsPage({ inputData, onGenerate, onBack }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [generatingDomain, setGeneratingDomain] = useState(null);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   useEffect(() => {
     fetchRecommendations();
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const getGridColumns = () => {
+    if (windowWidth < 768) return '1fr';
+    if (windowWidth < 1024) return 'repeat(2, 1fr)';
+    return 'repeat(3, 1fr)';
+  };
 
   const fetchRecommendations = async () => {
     try {
@@ -76,8 +86,6 @@ export default function RecommendationsPage({ inputData, onGenerate, onBack }) {
         .rec-card:hover { transform: translateY(-2px) !important; box-shadow: 0 8px 32px rgba(0,0,0,0.3) !important; }
         .gen-btn:hover { background: #0d9488 !important; }
         .other-card:hover { background: #1e1e1e !important; border-color: #14b8a6 !important; }
-        @media (max-width: 768px) { .rec-grid { grid-template-columns: 1fr !important; } }
-        @media (min-width: 769px) and (max-width: 1024px) { .rec-grid { grid-template-columns: repeat(2, 1fr) !important; } }
       `}</style>
 
       <div style={{ maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
@@ -168,16 +176,16 @@ export default function RecommendationsPage({ inputData, onGenerate, onBack }) {
 
         {/* Top 3 Cards + Other Options */}
         {!loading && data && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', width: '100%' }}>
 
-            {/* ✅ 3 Cards side by side */}
+            {/* ✅ 3 Cards side by side — using JS-based responsive */}
             <div
-              className="rec-grid"
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
+                gridTemplateColumns: getGridColumns(),
                 gap: '20px',
                 alignItems: 'stretch',
+                width: '100%',
               }}
             >
               {data.recommendations?.top_3?.map((item, i) => (
