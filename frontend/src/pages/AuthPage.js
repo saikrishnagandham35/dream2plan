@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
@@ -12,6 +12,25 @@ export default function AuthPage({ onAuthSuccess }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [otpEmail, setOtpEmail]       = useState('');
+  const [timer, setTimer] = useState(30);
+
+  useEffect(() => {
+  if (mode === 'otp') {
+    setTimer(30);
+
+    const interval = setInterval(() => {
+      setTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }
+}, [mode]);
 
   const reset = (newMode) => {
     setMode(newMode);
@@ -80,18 +99,35 @@ export default function AuthPage({ onAuthSuccess }) {
   };
 
   const handleResendOTP = async () => {
-    setLoading(true); setError(''); setSuccess('');
-    try {
-      const res = await fetch(`${API_URL}/api/auth/forgot-password`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: otpEmail }),
-      });
-      const data = await res.json();
-      if (!res.ok) { setError(data.detail || 'Failed to resend OTP'); return; }
-      setSuccess('New OTP sent to your email!');
-    } catch { setError('Cannot connect to server'); }
-    finally { setLoading(false); }
-  };
+  if (timer > 0) return; // ⛔ block spam
+
+  setLoading(true); 
+  setError(''); 
+  setSuccess('');
+
+  try {
+    const res = await fetch(`${API_URL}/api/auth/forgot-password`, {
+      method: 'POST', 
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: otpEmail }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) { 
+      setError(data.detail || 'Failed to resend OTP'); 
+      return; 
+    }
+
+    setSuccess('New OTP sent!');
+    setTimer(30); // 🔥 restart timer
+
+  } catch { 
+    setError('Cannot connect to server'); 
+  } finally { 
+    setLoading(false); 
+  }
+};
 
   const handleResetPassword = async () => {
     if (!form.newPassword)              { setError('Please enter a new password'); return; }
@@ -284,26 +320,66 @@ export default function AuthPage({ onAuthSuccess }) {
           )}
 
           {mode === 'otp' && (
-            <div style={{ display:'flex', flexDirection:'column', gap:'16px' }}>
-              <div>
-                <label style={labelStyle}>Enter 6-Digit OTP</label>
-                <input
-                  name="otp" type="text" value={form.otp}
-                  onChange={e => { setForm(f => ({...f, otp: e.target.value.replace(/\D/g,'').slice(0,6)})); setError(''); }}
-                  onFocus={onFocus} onBlur={onBlur} onKeyDown={handleKeyDown}
-                  placeholder="_ _ _ _ _ _" maxLength={6}
-                  style={{ ...baseInput, fontSize:'1.4rem', letterSpacing:'0.3em', textAlign:'center', fontFamily:'monospace' }}
-                />
-              </div>
-              {submitBtn('Verify OTP', handleVerifyOTP, '✅')}
-              <p style={{ textAlign:'center', color:'#4a6360', fontSize:'0.83rem', margin:0 }}>
-                Didn't receive?{' '}
-                <span onClick={handleResendOTP} style={{ color:'#14b8a6', cursor:'pointer', fontWeight:'600' }}>Resend OTP</span>
-                {'  ·  '}
-                <span onClick={() => reset('login')} style={{ color:'#556b68', cursor:'pointer' }}>Cancel</span>
-              </p>
-            </div>
-          )}
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    
+    <div>
+      <label style={labelStyle}>Enter 6-Digit OTP</label>
+      <input
+        name="otp"
+        type="text"
+        value={form.otp}
+        onChange={e => {
+          setForm(f => ({
+            ...f,
+            otp: e.target.value.replace(/\D/g, '').slice(0, 6)
+          }));
+          setError('');
+        }}
+        onFocus={onFocus}
+        onBlur={onBlur}
+        onKeyDown={handleKeyDown}
+        placeholder="_ _ _ _ _ _"
+        maxLength={6}
+        style={{
+          ...baseInput,
+          fontSize: '1.4rem',
+          letterSpacing: '0.3em',
+          textAlign: 'center',
+          fontFamily: 'monospace'
+        }}
+      />
+    </div>
+
+    {submitBtn('Verify OTP', handleVerifyOTP, '✅')}
+
+    {/* 🔥 TIMER + RESEND */}
+    <p style={{ textAlign: 'center', color: '#4a6360', fontSize: '0.83rem', margin: 0 }}>
+      
+      {timer > 0 ? (
+        <span style={{ color: '#6b8f8c' }}>
+          ⏳ Resend OTP in <b>{timer}s</b>
+        </span>
+      ) : (
+        <span
+          onClick={handleResendOTP}
+          style={{ color: '#14b8a6', cursor: 'pointer', fontWeight: '600' }}
+        >
+          🔄 Resend OTP
+        </span>
+      )}
+
+      {'  ·  '}
+      
+      <span
+        onClick={() => reset('login')}
+        style={{ color: '#556b68', cursor: 'pointer' }}
+      >
+        Cancel
+      </span>
+    </p>
+
+  </div>
+)}
 
           {mode === 'reset' && (
             <div style={{ display:'flex', flexDirection:'column', gap:'16px' }}>
