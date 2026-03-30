@@ -514,15 +514,6 @@ function LandingPage({ onGetStarted }) {
               </div>
             ))}
           </div>
-
-          <div style={{ textAlign: 'center' }}>
-            <p style={{
-              color: 'var(--text-muted)', fontSize: '0.9rem',
-              fontFamily: 'var(--font-body)',
-            }}>
-              This project was built as a BTech Final Year Project — combining AI, RAG, and real startup data to help aspiring entrepreneurs.
-            </p>
-          </div>
         </div>
       </section>
 
