@@ -320,35 +320,32 @@ export default function AuthPage({ onAuthSuccess }) {
           )}
 
           {mode === 'otp' && (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-    
     <div>
       <label style={labelStyle}>Enter 6-Digit OTP</label>
       <input
-        name="otp"
-        type="text"
-        value={form.otp}
-        onChange={e => {
-          setForm(f => ({
-            ...f,
-            otp: e.target.value.replace(/\D/g, '').slice(0, 6)
-          }));
-          setError('');
-        }}
-        onFocus={onFocus}
-        onBlur={onBlur}
-        onKeyDown={handleKeyDown}
-        placeholder="_ _ _ _ _ _"
-        maxLength={6}
-        style={{
-          ...baseInput,
-          fontSize: '1.4rem',
-          letterSpacing: '0.3em',
-          textAlign: 'center',
-          fontFamily: 'monospace'
-        }}
-      />
-    </div>
+  name="otp"
+  type="text"
+  value={form.otp}
+  onChange={(e) => {
+    setForm(f => ({
+      ...f,
+      otp: e.target.value.replace(/\D/g, '').slice(0, 6)
+    }));
+    setError('');
+  }}
+  onFocus={onFocus}
+  onBlur={onBlur}
+  onKeyDown={handleKeyDown}
+  placeholder="Enter 6-digit OTP"
+  maxLength={6}
+  style={{
+    ...baseInput,
+    fontSize: '1.2rem',
+    textAlign: 'center',
+    letterSpacing: '6px',
+    fontFamily: 'monospace'
+  }}
+/>
 
     {submitBtn('Verify OTP', handleVerifyOTP, '✅')}
 
