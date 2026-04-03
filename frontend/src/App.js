@@ -72,42 +72,55 @@ function App() {
 
   // ── Generate Blueprint ──
   const handleGenerateFromRecommendation = async (formDataWithDomain) => {
-    setPage('loading');
+  setPage('loading');
 
-    try {
-      const token = localStorage.getItem('d2p_token');
+  try {
+    // 🔹 Get token
+    const token = localStorage.getItem('d2p_token');
 
-      const headers = {
+    // ❗ If no token → force login
+    if (!token) {
+      alert("Session expired. Please login again.");
+      setPage('auth');
+      return;
+    }
+
+    // 🔹 API call with token
+    const response = await fetch(`${API_URL}/api/generate`, {
+      method: 'POST',
+      headers: {
         'Content-Type': 'application/json',
-      };
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(formDataWithDomain),
+    });
 
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
+    // 🔹 Handle response
+    const result = await response.json();
 
-      const response = await fetch(
-        `${API_URL}/api/generate`,
-        {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(formDataWithDomain),
-        }
-      );
+    if (response.status === 401) {
+      alert("Unauthorized. Please login again.");
+      localStorage.removeItem('d2p_token');
+      localStorage.removeItem('d2p_user');
+      setUser(null);
+      setPage('auth');
+      return;
+    }
 
-      const result = await response.json();
-
-      if (result.status === 'success') {
-        setBlueprintData(result);
-        setPage('results');
-      } else {
-        alert('Error: ' + (result.message || 'Something went wrong'));
-        setPage('recommendations');
-      }
-    } catch (err) {
-      alert('Could not connect to server');
+    if (result.status === 'success') {
+      setBlueprintData(result);
+      setPage('results');
+    } else {
+      alert('Error: ' + (result.message || 'Something went wrong'));
       setPage('recommendations');
     }
-  };
+
+  } catch (err) {
+    console.error("Generate Error:", err);
+    alert('Could not connect to server');
+    setPage('recommendations');
+  }
+};  
 
   // ── History view ──
   const handleViewHistoryBlueprint = (bp) => {
